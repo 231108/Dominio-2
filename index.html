@@ -1,1 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dominio y Rango de una Función</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.1/math.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7fa;
+      padding: 20px;
+    }
+    h2 {
+      color: #2c3e50;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      width: 100%;
+      font-size: 16px;
+    }
+    #resultado {
+      background: #ffffff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 15px;
+      white-space: pre-wrap;
+    }
+    canvas {
+      background-color: white;
+      border: 1px solid #ccc;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Dominio, Rango y Gráfica de una Función</h2>
+
+<input type="text" id="funcion" placeholder="Ej: x^2, sqrt(x), 1/(x-2)">
+<button onclick="graficarFuncion()">Graficar</button>
+
+<div id="resultado"></div>
+<canvas id="grafico" width="800" height="400"></canvas>
+
+<script>
+function graficarFuncion() {
+  const input = document.getElementById("funcion").value;
+  const resultado = document.getElementById("resultado");
+  const ctx = document.getElementById('grafico').getContext('2d');
+  resultado.innerText = '';
+
+  let expr;
+  try {
+    expr = math.parse(input).compile();
+  } catch (e) {
+    resultado.innerText = "Error al interpretar la función. Asegúrate de escribirla correctamente.";
+    return;
+  }
+
+  const xVals = [];
+  const yVals = [];
+  const errores = [];
+  let minY = Infinity, maxY = -Infinity;
+
+  for (let x = -10; x <= 10; x += 0.1) {
+    try {
+      const scope = { x: x };
+      const y = expr.evaluate(scope);
+
+      if (typeof y === 'number' && isFinite(y)) {
+        xVals.push(x);
+        yVals.push(y);
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      } else {
+        errores.push(x);
+      }
+    } catch {
+      errores.push(x);
+    }
+  }
+
+  let dominioTexto = errores.length === 0
+    ? "ℝ (todos los reales)"
+    : `ℝ excluyendo x = {${errores.map(v => v.toFixed(2)).join(", ")}}`;
+
+  let rangoTexto = `Desde aproximadamente ${minY.toFixed(2)} hasta ${maxY.toFixed(2)}`;
+
+  resultado.innerText =
+    `Función: f(x) = ${input}\n\nDominio estimado: ${dominioTexto}\nRango estimado: ${rangoTexto}`;
+
+  if (window.miGrafico) window.miGrafico.destroy();
+
+  window.miGrafico = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: xVals,
+      datasets: [{
+        label: 'f(x)',
+        data: yVals,
+        borderColor: '#2980b9',
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        x: {
+          title: { display: true, text: 'x' }
+        },
+        y: {
+          title: { display: true, text: 'f(x)' }
+        }
+      },
+      plugins: {
+        legend: { display: false }
+      }
+    }
+  });
+}
+</script>
+
+</body>
+</html>
 
